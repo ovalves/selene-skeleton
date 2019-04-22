@@ -1,0 +1,23 @@
+{
+    "name": "vindite/vindite-skeleton",
+    "description": "simple usage of vindite microframework",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Vinicius Oliveira",
+            "email": "vinicius_o.a@live.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Vindite\\": "src/Vindite"
+        }
+    },
+    "keywords": [
+        "php microframework"
+    ],
+    "require": {
+        "vindite/vindite": "dev-master@dev"
+    }
+}
