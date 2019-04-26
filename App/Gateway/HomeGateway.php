@@ -19,14 +19,13 @@ class HomeGateway extends GatewayAbstract
     public function getPessoas()
     {
         return $this
-            ->select('*')
-            ->table('pessoa')
-            ->where(['bairro = ?'    => 'centro'])
-            ->where(['email != ?'    => 'vinicius_o.a@Live.com'])
-            ->where(['nome = ?'      => 'Ari Stopassola Junior'])
-            ->where(['id_cidade = ?' => 23])
-            ->execute()
-            ->fetchAll();
+                ->select('*')
+                ->table('pessoa')
+                ->where(['bairro = ?' => 'centro'])
+                ->where(['email = ?' => 'teste@teste.com'])
+                ->where(['id_cidade = ?' => 1])
+                ->execute()
+                ->fetchAll();
     }
 
     /**
@@ -35,8 +34,8 @@ class HomeGateway extends GatewayAbstract
     public function insertTipo()
     {
         return $this->insert([
-                'id' => 9,
-                'nome' => 'sample'
+                'id' => 1,
+                'nome' => 'Teste'
             ])
             ->table('tipo')
             ->execute();
@@ -59,10 +58,10 @@ class HomeGateway extends GatewayAbstract
     public function updateTipo()
     {
         $this->update([
-                'nome' => 'Sergio'
+                'nome' => 'Teste2'
             ])
             ->table('tipo')
-            ->where(['id = ?' => 3])
+            ->where(['id = ?' => 1])
             ->execute();
     }
 }

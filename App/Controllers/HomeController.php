@@ -85,20 +85,4 @@ class HomeController extends BaseController
         echo 'index of sample controller';
         echo '<br><br>';
     }
-
-    public function show(Request $request)
-    {
-        echo '<a href="/" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored mdl-color-text--white">View Source</a>';
-    }
-
-    /**
-     * Action Store
-     *
-     * @return template|view
-     */
-    public function store()
-    {
-        echo 'stored';
-    }
 }
-
