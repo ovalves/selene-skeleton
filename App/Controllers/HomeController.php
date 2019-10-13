@@ -8,6 +8,7 @@
 
 use Vindite\Controllers\BaseController;
 use Vindite\Request\Request;
+use Vindite\Response\Response;
 use HomeGateway;
 
 /**
@@ -84,5 +85,25 @@ class HomeController extends BaseController
         $this->view()->render('home/home.php');
         echo 'index of sample controller';
         echo '<br><br>';
+    }
+
+    public function store(Request $request, Response $response)
+    {
+        if ($response->isUnauthorized()) {
+            $response->redirectToLoginPage();
+        }
+
+        echo "store page";
+    }
+
+    public function login(Request $request)
+    {
+        if ($request->getMethod() == "GET") {
+            $this->view()->render('home/login.php');
+        } else {
+            echo '<pre>';
+            var_dump ($request);
+            die();
+        }
     }
 }
