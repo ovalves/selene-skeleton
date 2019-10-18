@@ -1,18 +1,18 @@
-# Vindite Microframework
+# Selene Microframework
 
-Vindite is a PHP micro-framework that helps you quickly write simple web applications.
+Selene is a PHP micro-framework that helps you quickly write simple web applications.
 
 ## Installation
 
-It's recommended that you use [Composer](https://getcomposer.org/) to install Vindite.
+It's recommended that you use [Composer](https://getcomposer.org/) to install Selene.
 
 ```bash
-$ composer require vindite/vindite "dev-master@dev"
+$ composer require vindite/selene "dev-master@dev"
 ```
 
-This will install Vindite and all required dependencies. Vindite requires PHP 7.2 or newer.
+This will install Selene and all required dependencies. Selene requires PHP 7.2 or newer.
 
-## Seting up Vindite Microframework
+## Usage
 
 Create an index.php file with the following contents:
 
@@ -21,81 +21,97 @@ Create an index.php file with the following contents:
 
 require 'vendor/autoload.php';
 
-$app = Vindite\App::getInstance();
+// Loading your application folders
+$loader = new Selene\Loader\AppLoader;
+$loader->addDirectory('App/Controllers');
+$loader->addDirectory('App/Models');
+$loader->addDirectory('App/Gateway');
+$loader->addDirectory('App/Config');
+$loader->load();
 
+// Getting an instance of Selene framework
+$app = Selene\App::getInstance();
+
+// Using the router to register your application routes
+// In this case we are using the authentication middleware
 $app->route()->middleware([
-    new Vindite\Middleware\Handler\Auth,
-    new Vindite\Middleware\Handler\Session
+    new Selene\Middleware\Handler\Auth
 ])->group(function () use ($app) {
-    $app->route()->get('/hello/{name}', function ($argument) use ($app) {
-        return $app->json("Hello, {$argument['name']}");
+
+    // This route responds as callback function
+    $app->route()->get('/callable', function () use ($app) {
+        $app->json('ola mundo again');
     });
+
+    // Mapping requested http method with request http path
     $app->route()->get('/', 'HomeController@index');
-    $app->route()->post('/store', 'HomeController@store');
-    $app->route()->put('/put/{id}', 'HomeController@put');
-    $app->route()->delete('/delete/{id}', 'HomeController@delete');
+    $app->route()->get('/shos/{id}', 'HomeController@show');
+    $app->route()->get('/show/{id}', 'HomeController@show');
+    $app->route()->get('/store', 'HomeController@store');
+    $app->route()->get('/login', 'HomeController@login');
+    $app->route()->post('/login', 'HomeController@login');
+    $app->route()->get('/logout', 'HomeController@logout');
 })->run();
 ```
 
 ## Creating a database gateway connection
 
-Create a file called HomeGateway.php inside the Gateway folder with the following contents:
+Create a file inside the Gateway folder with the following contents:
 
 ```php
 <?php
 
-use Vindite\Gateway\GatewayAbstract;
+use Selene\Gateway\GatewayAbstract;
 
-class HomeGateway extends GatewayAbstract
+class BookGateway extends GatewayAbstract
 {
     /**
-     * Using the gateway ORM to execute a simple query select
+     * Using the gateway to create a query
      */
-    public function select()
+    public function getBooks()
     {
         return $this
                 ->select('*')
-                ->table('person')
-                ->where(['country = ?' => 'brazil'])
-                ->where(['name = ?' => 'John Doe'])
+                ->table('books')
+                ->where(['title = ?' => 'matrix'])
                 ->execute()
                 ->fetchAll();
     }
 
     /**
-     * Using the gateway ORM to make a simple insert query
+     * Creating an insert clause
      */
-    public function insert()
+    public function insertBook()
     {
         return $this->insert([
                 'id' => 1,
-                'name' => 'Mary'
+                'title' => 'Toy Story'
             ])
-            ->table('person')
+            ->table('books')
             ->execute();
     }
 
     /**
-     * Using the gateway ORM to update a row of the database
+     * Creating a delete clause
      */
-    public function update()
-    {
-        $this->update([
-                'name' => 'Stuart'
-            ])
-            ->table('person')
-            ->where(['id = ?' => 1])
-            ->execute();
-    }
-
-    /**
-     * Using the gateway ORM to delete a row of the database
-     */
-    public function deleteTipo()
+    public function deleteBook(int $cod)
     {
         $this->delete()
-            ->table('person')
-            ->where(['id = ?' => 1)
+            ->table('books')
+            ->where(['id = ?' => $cod])
+            ->execute();
+    }
+
+    /**
+     * Creating an update clause
+     */
+    public function updateTipo()
+    {
+        $this->update([
+                'title' => 'Toy Story'
+            ])
+            ->table('books')
+            ->where(['id = ?' => 1])
             ->execute();
     }
 }
@@ -103,92 +119,272 @@ class HomeGateway extends GatewayAbstract
 
 ## Creating a controller
 
-Create a file called HomeController.php inside the Controllers folder with the following contents:
+Create a file inside the Controllers folder with the following contents:
 
 ```php
 <?php
 
-use Vindite\Controllers\BaseController;
-use Vindite\Request\Request;
+use Selene\App\AppCreator;
+use Selene\Controllers\BaseController;
+use Selene\Request\Request;
+use Selene\Response\Response;
 use HomeGateway;
 
-class HomeController extends BaseController
+class BookController extends BaseController
 {
-    public function index(Request $request)
+    /**
+     * Index Action
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return template|view
+     */
+    public function index(Request $request, Response $response)
     {
-        /**
-         * Setting a model object
-         */
-        $person = new Person;
-        $person->city     = 'sao paulo';
-        $person->nome     = 'JOHN';
-        $person->phone    = '+55 11 99999-9999';
-        $person->email    = 'sample@sample.com';
-
-        $persons = [
-            [
-                'name' => 'John',
-                'age' => 46
+        $books = [
+            0 => [
+                'terror' => 'A terror book',
+                'romance' => 'A romance book'
             ],
-            [
-                'name' => 'Mary',
-                'age' => 23
+            1 => [
+                'romance' => 'Another romance book',
             ]
         ];
 
         /**
-         * Assign variables to template engine
+         * @example Setting variables for the view
          */
-        $this->view()->assign('city', $person->city);
-        $this->view()->assign('name', $person->nome);
-        $this->view()->assign('phone', $person->phone);
-        $this->view()->assign('email', $person->email);
+        $this->view()->assign('books', $books);
+        $this->view()->assign('statement', 'Matrix');
+        $this->view()->assign('anotherStatement', 'Toy Story');
+        $this->view()->assign('toUpperCase', 'person');
+        $this->view()->assign('toLowerCase', 'PERSON');
 
         /**
-         * Assign an array to template engine
-         */
-        $this->view()->assign('persons', $persons);
-
-        /**
-         * Render a template engine
-         */
+        * @example render view
+        */
         $this->view()->render('home/home.php');
     }
 }
 ```
+## Getting the request parameters
 
-## Creating a template with vindite template engine
+```php
+<?php
+
+    // ... omitted code
+
+    /**
+     * Index Action
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return template|view
+    */
+    public function index(Request $request, Response $response)
+    {
+        // Getting post params
+        $request->getPostParams();
+
+        // Getting get params
+        $request->getGetParams();
+
+        // Getting put params
+        $request->getPutParams();
+
+        // Getting delete params
+        $request->getDeleteParams();
+    }
+
+    // ... omitted code
+```
+
+## Using Authentication on Controller
+
+If you are using authentication middleware you can test if the user is logged in.
+
+```php
+<?php
+
+    // ... omitted code
+
+    /**
+     * Index Action
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return template|view
+    */
+    public function index(Request $request, Response $response)
+    {
+        if ($response->isUnauthorized()) {
+            $response->redirectToLoginPage();
+        }
+
+        // ... omitted code
+    }
+
+    // ... omitted code
+```
+Using Selene Authentication Container you can register, authenticate or lo users too
+
+```php
+<?php
+
+    // ... omitted code
+
+    /**
+     * Index Action
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return template|view
+    */
+    public function register(Request $request, Response $response)
+    {
+        // Getting the authentication object container
+        $auth = AppCreator::container()->get(AppCreator::AUTH);
+
+        // Getting request params
+        $data = $request->getPostParams();
+
+        // Registering user
+        $auth->registerUser($data['email'], $data['password']);
+    }
+
+    /**
+     * isAuthenticated Action
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return template|view
+    */
+    public function isAuthenticated(Request $request, Response $response)
+    {
+        // Getting the authentication object container
+        $auth = AppCreator::container()->get(AppCreator::AUTH);
+
+        // Testing authentication
+        if ($auth->isAuthenticated()) {
+            $this->view()->render('home/home.php');
+        } else {
+            $this->view()->render('home/login.php');
+        }
+    }
+
+    /**
+     * logout Action
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return template|view
+     */
+    public function logout(Request $request, Response $response)
+    {
+        // Getting the authentication object container
+        $auth = AppCreator::container()->get(AppCreator::AUTH);
+        $auth->logout();
+    }
+
+    // ... omitted code
+```
+
+## Changing session configuration parameters
+
+If you are using authentication middleware, you will need to set session parameters.
+
+```php
+use Selene\Config\ConfigInterface;
+use Selene\Config\ConfigConstant;
+
+class Session implements ConfigInterface
+{
+    public function __invoke() : array
+    {
+        return [
+            ConfigConstant::SESSION_TABLE_NAME      => "session",
+            ConfigConstant::SESSION_EXPIRATION_TIME => 30,
+            ConfigConstant::SESSION_REFRESH_TIME    => 10,
+        ];
+    }
+}
+```
+
+## Changing authentication configuration parameters
+
+If you are using authentication middleware, you will need to set auth parameters.
+
+```php
+use Selene\Config\ConfigInterface;
+use Selene\Config\ConfigConstant;
+
+class Auth implements ConfigInterface
+{
+    public function __invoke() : array
+    {
+        return [
+            ConfigConstant::AUTH_LOGIN_URL              => "/login",
+            ConfigConstant::AUTH_TABLE_NAME             => "user",
+            ConfigConstant::AUTH_REDIRECT_SUCCESS_LOGIN => "/users",
+            ConfigConstant::AUTH_REDIRECT_FAILED_LOGIN  => "/logout"
+        ];
+    }
+}
+```
+
+## Creating a template with Selene template engine
 
 Create a file called home.php inside the Views/home folder with the following contents:
 
 ```php
 <?php
 
-<!-- Include a partial template -->
+<!-- include a partial template -->
 {{ include /partials/header.php }}
 
-<!-- Iterate an array of persons -->
-{{ foreach $persons as $person }}
-    <p>{{ $person.name }}</p>
-    <p>{{ $person.age }}</p>
+<!-- Iterating in an array -->
+{{ foreach $books as $book }}
+    <p>{{ $book.terror }}</p>
+    <p>{{ $book.romance }}</p>
 {{ endforeach }}
 
+<!-- Using template modification plugins -->
+<p>{{ $toUpperCase | upper }}</p>
+<p>{{ $toLowerCase | lower }}</p>
 
-<!-- Using the template engine plugins -->
-<p>{{ $city | upper }}</p> <!-- SAO PAULO -->
-<p>{{ $name | lower }}</p>  <!-- john -->
-
-<!-- uso da tag if no template -->
-{{ if ($name == 'john') }}
-    <p>Hello John</p>
-{{ elseif ($name == 'Maty') }}
-    <p>Hello Mary</p>
+<!-- use of if tag in template -->
+{{ if ($statement == 'compare') }}
+    <!-- ...code -->
+{{ elseif ($anotherStatement == 'compare') }}
+    <!-- ...code -->
 {{ else }}
-    <p>Hello!!!</p>
+    <!-- ...code -->
 {{ endif }}
 
-<!-- Include a partial template -->
+<!-- include a partial template -->
 {{ include /partials/footer.php }}
+```
+
+## Using Selene solvr console to generate class
+
+## Asking for console help
+```php
+php solvr --help
+```
+
+## Asking for console help on making controllers
+```php
+php solvr generate:controller --help
+```
+
+## Making a simple controller
+```php
+php solvr generate:controller simpleController
+```
+
+## Creating a resource controller (it will create actions for HTTP methods - to make CRUD easier)
+```php
+php solvr generate:controller resourceController --resource
 ```
 
 ## Database connection
@@ -209,4 +405,4 @@ type = mysql
 
 ## License
 
-The Vindite Microframework is licensed under the MIT license. See [License File](LICENSE) for more information.
+The Selene Microframework is licensed under the MIT license. See [License File](LICENSE) for more information.

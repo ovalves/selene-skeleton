@@ -1,66 +1,61 @@
 <?php
 /**
- * @copyright   2018 - Vindite
+ * @copyright   2019 - Selene
  * @author      Vinicius Oliveira <vinicius_o.a@live.com>
  * @category    Micro Framework
- * @since       2018-04-28
+ * @since       2019-10-12
  */
 
-use Vindite\Gateway\GatewayAbstract;
+use Selene\Gateway\GatewayAbstract;
 
-/**
- * Responsavel por fazer a ponte entra a controller e a base de dados
- */
 class HomeGateway extends GatewayAbstract
 {
     /**
-     * Usando o gateway para criar uma query
+     * Using the gateway to create a query
      */
-    public function getPessoas()
+    public function getBooks()
     {
         return $this
                 ->select('*')
-                ->table('pessoa')
-                ->where(['bairro = ?' => 'centro'])
-                ->where(['email = ?' => 'teste@teste.com'])
-                ->where(['id_cidade = ?' => 1])
+                ->table('books')
+                ->where(['title = ?' => 'matrix'])
                 ->execute()
                 ->fetchAll();
     }
 
     /**
-     * Criando uma clausula insert
+     * Creating an insert clause
      */
-    public function insertTipo()
+    public function insertBook()
     {
         return $this->insert([
                 'id' => 1,
-                'nome' => 'Teste'
+                'title' => 'Toy Story'
             ])
-            ->table('tipo')
+            ->table('books')
             ->execute();
     }
 
     /**
-     * Criando uma clausula delete
+     * Creating a delete clause
      */
-    public function deleteTipo(int $cod)
+    public function deleteBook(int $cod)
     {
         $this->delete()
-            ->table('tipo')
+            ->table('books')
             ->where(['id = ?' => $cod])
             ->execute();
     }
 
     /**
-     * Criando uma clausula update
+     * Creating an update clause
      */
     public function updateTipo()
     {
         $this->update([
-                'nome' => 'Teste2'
+                'title' => 'Toy Story'
             ])
-            ->table('tipo')
+            ->table('books')
             ->where(['id = ?' => 1])
             ->execute();
     }

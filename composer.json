@@ -1,23 +1,21 @@
 {
-    "name": "vindite/vindite-skeleton",
-    "description": "simple usage of vindite microframework",
+    "name": "vindite/selene-skeleton",
+    "description": "simple usage of Selene microframework",
     "type": "project",
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Vinicius Oliveira",
-            "email": "vinicius_o.a@live.com"
-        }
-    ],
+    "authors": [{
+        "name": "Vinicius Oliveira",
+        "email": "vinicius_o.a@live.com"
+    }],
     "autoload": {
         "psr-4": {
-            "Vindite\\": "src/Vindite"
+            "Selene\\": "src/Selene"
         }
     },
     "keywords": [
         "php microframework"
     ],
     "require": {
-        "vindite/vindite": "dev-master@dev"
+        "Selene/Selene": "dev-master@dev"
     }
 }
