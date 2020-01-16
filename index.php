@@ -8,22 +8,11 @@
 
 require_once "vendor/autoload.php";
 
-$loader = new Selene\Loader\AppLoader;
-$loader->addDirectory('App/Controllers');
-$loader->addDirectory('App/Models');
-$loader->addDirectory('App/Gateway');
-$loader->addDirectory('App/Config');
-$loader->load();
-
-/**
- * Instanciando o framework
- */
-$app = Selene\App::getInstance();
+$app = Selene\App\Factory::create();
 
 $app->route()->middleware([
-    new Selene\Middleware\Handler\Auth
+   new Selene\Middleware\Handler\Auth
 ])->group(function () use ($app) {
-
     $app->route()->get('/callable', function () use ($app) {
         $app->json('ola mundo again');
     });
@@ -34,5 +23,6 @@ $app->route()->middleware([
     $app->route()->get('/store', 'HomeController@store');
     $app->route()->get('/login', 'HomeController@login');
     $app->route()->post('/login', 'HomeController@login');
+    $app->route()->get('/logout', 'HomeController@logout');
     $app->route()->get('/logout', 'HomeController@logout');
 })->run();

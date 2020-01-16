@@ -6,11 +6,10 @@
  * @since       2019-10-12
  */
 
-use Selene\App\AppCreator;
+use Selene\Container\ServiceContainer;
 use Selene\Controllers\BaseController;
 use Selene\Request\Request;
 use Selene\Response\Response;
-use HomeGateway;
 
 class HomeController extends BaseController
 {
@@ -23,15 +22,12 @@ class HomeController extends BaseController
      */
     public function index(Request $request, Response $response)
     {
-        $books = [
-            0 => [
-                'terror' => 'A terror book',
-                'romance' => 'A romance book'
-            ],
-            1 => [
-                'romance' => 'Another romance book',
-            ]
-        ];
+        $books = $this
+            ->select('*')
+            ->table('books')
+            ->where(['title = ?' => 'matrix'])
+            ->execute()
+            ->fetchAll();
 
         /**
          * @example Setting variables for the view
@@ -61,7 +57,7 @@ class HomeController extends BaseController
             $response->redirectToLoginPage();
         }
 
-        $auth = AppCreator::container()->get(AppCreator::AUTH);
+        $auth = $this->container->get(ServiceContainer::AUTH);
         if ($auth->isAuthenticated()) {
             // render store page
         } else {
@@ -79,7 +75,7 @@ class HomeController extends BaseController
     public function register(Request $request)
     {
         $data = $request->getPostParams();
-        $auth = AppCreator::container()->get(AppCreator::AUTH);
+        $auth = $this->container->get(ServiceContainer::AUTH);
 
         /**
          * Register the user in the database
@@ -96,7 +92,7 @@ class HomeController extends BaseController
      */
     public function login(Request $request, Response $response)
     {
-        $auth = AppCreator::container()->get(AppCreator::AUTH);
+        $auth = $this->container()->get(ServiceContainer::AUTH);
 
         if ($request->getMethod() == "GET" && !$auth->isAuthenticated()) {
             $this->view()->render('home/login.php');
@@ -120,7 +116,7 @@ class HomeController extends BaseController
      */
     public function logout(Request $request, Response $response)
     {
-        $auth = AppCreator::container()->get(AppCreator::AUTH);
+        $auth = $this->container->get(ServiceContainer::AUTH);
         $auth->logout();
     }
 }

@@ -21,29 +21,15 @@ Create an index.php file with the following contents:
 
 require 'vendor/autoload.php';
 
-// Loading your application folders
-$loader = new Selene\Loader\AppLoader;
-$loader->addDirectory('App/Controllers');
-$loader->addDirectory('App/Models');
-$loader->addDirectory('App/Gateway');
-$loader->addDirectory('App/Config');
-$loader->load();
+$app = Selene\App\Factory::create();
 
-// Getting an instance of Selene framework
-$app = Selene\App::getInstance();
-
-// Using the router to register your application routes
-// In this case we are using the authentication middleware
 $app->route()->middleware([
-    new Selene\Middleware\Handler\Auth
+   new Selene\Middleware\Handler\Auth
 ])->group(function () use ($app) {
-
-    // This route responds as callback function
     $app->route()->get('/callable', function () use ($app) {
         $app->json('ola mundo again');
     });
 
-    // Mapping requested http method with request http path
     $app->route()->get('/', 'HomeController@index');
     $app->route()->get('/shos/{id}', 'HomeController@show');
     $app->route()->get('/show/{id}', 'HomeController@show');
@@ -51,70 +37,8 @@ $app->route()->middleware([
     $app->route()->get('/login', 'HomeController@login');
     $app->route()->post('/login', 'HomeController@login');
     $app->route()->get('/logout', 'HomeController@logout');
+    $app->route()->get('/logout', 'HomeController@logout');
 })->run();
-```
-
-## Creating a database gateway connection
-
-Create a file inside the Gateway folder with the following contents:
-
-```php
-<?php
-
-use Selene\Gateway\GatewayAbstract;
-
-class BookGateway extends GatewayAbstract
-{
-    /**
-     * Using the gateway to create a query
-     */
-    public function getBooks()
-    {
-        return $this
-                ->select('*')
-                ->table('books')
-                ->where(['title = ?' => 'matrix'])
-                ->execute()
-                ->fetchAll();
-    }
-
-    /**
-     * Creating an insert clause
-     */
-    public function insertBook()
-    {
-        return $this->insert([
-                'id' => 1,
-                'title' => 'Toy Story'
-            ])
-            ->table('books')
-            ->execute();
-    }
-
-    /**
-     * Creating a delete clause
-     */
-    public function deleteBook(int $cod)
-    {
-        $this->delete()
-            ->table('books')
-            ->where(['id = ?' => $cod])
-            ->execute();
-    }
-
-    /**
-     * Creating an update clause
-     */
-    public function updateTipo()
-    {
-        $this->update([
-                'title' => 'Toy Story'
-            ])
-            ->table('books')
-            ->where(['id = ?' => 1])
-            ->execute();
-    }
-}
 ```
 
 ## Creating a controller
@@ -124,11 +48,10 @@ Create a file inside the Controllers folder with the following contents:
 ```php
 <?php
 
-use Selene\App\AppCreator;
+use Selene\Container\ServiceContainer;
 use Selene\Controllers\BaseController;
 use Selene\Request\Request;
 use Selene\Response\Response;
-use HomeGateway;
 
 class BookController extends BaseController
 {
@@ -141,15 +64,37 @@ class BookController extends BaseController
      */
     public function index(Request $request, Response $response)
     {
-        $books = [
-            0 => [
-                'terror' => 'A terror book',
-                'romance' => 'A romance book'
-            ],
-            1 => [
-                'romance' => 'Another romance book',
-            ]
-        ];
+        /**
+         * Select Query
+         */
+        $books = $this->select('*')
+                      ->table('books')
+                      ->where(['title = ?' => 'movies'])
+                      ->execute()
+                      ->fetchAll();
+
+        /**
+         * Insert Query
+         */
+        $this->insert(['id' => 1, 'title' => 'Toy Story'])
+             ->table('movies')
+             ->execute();
+
+        /**
+         * Update Query
+         */
+        $this->update(['title' => 'Toy Story'])
+             ->table('movies')
+             ->where(['id = ?' => 1])
+             ->execute();
+
+        /**
+         * Delete Query
+         */
+        $this->delete()
+             ->table('movies')
+             ->where(['id = ?' => $cod])
+             ->execute();
 
         /**
          * @example Setting variables for the view
@@ -243,7 +188,7 @@ Using Selene Authentication Container you can register, authenticate or lo users
     public function register(Request $request, Response $response)
     {
         // Getting the authentication object container
-        $auth = AppCreator::container()->get(AppCreator::AUTH);
+        $auth = $this->container->get(ServiceContainer::AUTH);
 
         // Getting request params
         $data = $request->getPostParams();
@@ -262,7 +207,7 @@ Using Selene Authentication Container you can register, authenticate or lo users
     public function isAuthenticated(Request $request, Response $response)
     {
         // Getting the authentication object container
-        $auth = AppCreator::container()->get(AppCreator::AUTH);
+        $auth = $this->container->get(ServiceContainer::AUTH);
 
         // Testing authentication
         if ($auth->isAuthenticated()) {
@@ -282,54 +227,37 @@ Using Selene Authentication Container you can register, authenticate or lo users
     public function logout(Request $request, Response $response)
     {
         // Getting the authentication object container
-        $auth = AppCreator::container()->get(AppCreator::AUTH);
+        $auth = $this->container->get(ServiceContainer::AUTH);
         $auth->logout();
     }
 
     // ... omitted code
 ```
 
-## Changing session configuration parameters
-
-If you are using authentication middleware, you will need to set session parameters.
+## Changing app configuration parameters
 
 ```php
-use Selene\Config\ConfigInterface;
-use Selene\Config\ConfigConstant;
-
-class Session implements ConfigInterface
-{
-    public function __invoke() : array
-    {
-        return [
-            ConfigConstant::SESSION_TABLE_NAME      => "session",
-            ConfigConstant::SESSION_EXPIRATION_TIME => 30,
-            ConfigConstant::SESSION_REFRESH_TIME    => 10,
-        ];
-    }
-}
-```
-
-## Changing authentication configuration parameters
-
-If you are using authentication middleware, you will need to set auth parameters.
-
-```php
-use Selene\Config\ConfigInterface;
-use Selene\Config\ConfigConstant;
-
-class Auth implements ConfigInterface
-{
-    public function __invoke() : array
-    {
-        return [
-            ConfigConstant::AUTH_LOGIN_URL              => "/login",
-            ConfigConstant::AUTH_TABLE_NAME             => "user",
-            ConfigConstant::AUTH_REDIRECT_SUCCESS_LOGIN => "/users",
-            ConfigConstant::AUTH_REDIRECT_FAILED_LOGIN  => "/logout"
-        ];
-    }
-}
+    return [
+        // Changing the database configuration parameters
+        'database' => [
+            'mysql' => [
+                'db_host' => '127.0.0.1',
+                'db_name' => 'vindite',
+                'db_user' => 'root',
+                'db_pass' => 'root',
+                'db_type' => 'mysql'
+            ],
+            'default' => 'mysql'
+        ],
+        // If you are using authentication middleware, you will need to set session parameters.
+        'auth' => [
+            // data
+        ],
+        // If you are using authentication middleware, you will need to set auth parameters.
+        'session' => [
+            // data
+        ]
+    ];
 ```
 
 ## Creating a template with Selene template engine
@@ -344,14 +272,18 @@ Create a file called home.php inside the Views/home folder with the following co
 
 <!-- Iterating in an array -->
 {{ foreach $books as $book }}
-    <p>{{ $book.terror }}</p>
-    <p>{{ $book.romance }}</p>
+    <p>{{ $book.terror | lower }}</p>
+    <p>{{ $book.romance | upper }}</p>
+    <p>{{ $book.action | upper }}</p>
 {{ endforeach }}
 
 <!-- Using template modification plugins -->
+<p>{{ $anotherStatement | lower }}</p>
 <p>{{ $toUpperCase | upper }}</p>
 <p>{{ $toLowerCase | lower }}</p>
+<p>{{ $statement | upper }}</p>
 
+<a href="/login">teste</a>
 <!-- use of if tag in template -->
 {{ if ($statement == 'compare') }}
     <!-- ...code -->
@@ -385,18 +317,6 @@ php solvr generate:controller simpleController
 ## Creating a resource controller (it will create actions for HTTP methods - to make CRUD easier)
 ```php
 php solvr generate:controller resourceController --resource
-```
-
-## Database connection
-
-Create a file called database_connection.ini inside the App/Config folder with the following contents:
-
-```php
-host = 127.0.0.1
-name = database_name
-user = database_user
-pass = database_password
-type = mysql
 ```
 
 ## Credits
