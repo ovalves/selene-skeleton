@@ -16,6 +16,6 @@
         "php microframework"
     ],
     "require": {
-        "Selene/Selene": "dev-master@dev"
+        "ovalves/selene": "dev-master@dev"
     }
 }
