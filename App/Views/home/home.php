@@ -3,9 +3,7 @@
 
 <!-- Iterating in an array -->
 {{ foreach $books as $book }}
-    <p>{{ $book.terror | lower }}</p>
-    <p>{{ $book.romance | upper }}</p>
-    <p>{{ $book.action | upper }}</p>
+    <p>{{ $book.title | lower }}</p>
 {{ endforeach }}
 
 <!-- Using template modification plugins -->
