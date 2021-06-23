@@ -8,19 +8,16 @@
 
 use Selene\Container\ServiceContainer;
 use Selene\Controllers\BaseController;
+use Selene\Render\View;
 use Selene\Request\Request;
 use Selene\Response\Response;
 
 class HomeController extends BaseController
 {
     /**
-     * Index Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
+     * Index Action.
      */
-    public function index(Request $request, Response $response)
+    public function index(): View
     {
         $books = $this
             ->select('*')
@@ -29,7 +26,7 @@ class HomeController extends BaseController
             ->execute()
             ->fetchAll();
 
-        /**
+        /*
          * @example Setting variables for the view
          */
         $this->view()->assign('books', $books);
@@ -38,20 +35,16 @@ class HomeController extends BaseController
         $this->view()->assign('toUpperCase', 'person');
         $this->view()->assign('toLowerCase', 'PERSON');
 
-        /**
+        /*
         * @example render view
         */
-        $this->view()->render('home/home.php');
+        return $this->view()->render('home/home.php');
     }
 
     /**
-     * store Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
+     * store Action.
      */
-    public function store(Request $request, Response $response)
+    public function store(Request $request, Response $response): View
     {
         if ($response->isUnauthorized()) {
             $response->redirectToLoginPage();
@@ -59,64 +52,57 @@ class HomeController extends BaseController
 
         $auth = $this->container->get(ServiceContainer::AUTH);
         if ($auth->isAuthenticated()) {
-            // render store page
-        } else {
-            // render login page
+            return $this->view()->render('home/store.php');
         }
+
+        return $this->view()->render('home/login.php');
     }
 
     /**
-     * register user Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
+     * register user Action.
      */
-    public function register(Request $request)
+    public function register(Request $request): void
     {
         $data = $request->getPostParams();
         $auth = $this->container->get(ServiceContainer::AUTH);
 
-        /**
+        /*
          * Register the user in the database
          */
         $auth->registerUser($data['email'], $data['password']);
     }
 
     /**
-     * login user Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
+     * login user Action.
      */
-    public function login(Request $request, Response $response)
+    public function login(Request $request): View
     {
         $auth = $this->container()->get(ServiceContainer::AUTH);
 
-        if ($request->getMethod() == "GET" && !$auth->isAuthenticated()) {
-            $this->view()->render('home/login.php');
-        } else {
-            if ($auth->isAuthenticated()) {
-                // is authenticated
-            } else {
-                // authenticating
-                $data = $request->getPostParams();
-                $data = $auth->authenticate($data['email'], $data['password']);
-            }
+        if ('GET' == $request->getMethod() && !$auth->isAuthenticated()) {
+            return $this->view()->render('home/login.php');
+        }
+
+        if ($auth->isAuthenticated()) {
+            return $this->view()->render('home/home.php');
+        }
+
+        $data = $request->getPostParams();
+        $data = $auth->authenticate($data['email'], $data['password']);
+
+        if ($auth->isAuthenticated()) {
+            return $this->view()->render('home/home.php');
         }
     }
 
     /**
-     * login user Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
+     * logout user Action.
      */
-    public function logout(Request $request, Response $response)
+    public function logout(): View
     {
         $auth = $this->container->get(ServiceContainer::AUTH);
         $auth->logout();
+
+        return $this->view()->render('home/login.php');
     }
 }
