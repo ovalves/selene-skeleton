@@ -364,19 +364,19 @@ As views do framework ficam na pasta public/Views:
 
 ### Crie um arquivo chamado template.html
 
-```php
-{% include /partials/header.html %}
+```html
+{{ include /partials/header.html }}
     <div class="wrapper">
-        {% include /components/navbar.html %}
+        {{ include /components/navbar.html }}
         <div class="content-wrapper">
             <section class="content">
                 <div class="container-fluid">
-                    {% yield content %}
+                    {{ yield content }}
                 </div>
             </section>
         </div>
     </div>
-{% include /partials/footer.html %}
+{{ include /partials/footer.html }}
 ```
 
 No código acima, definimos um template que pode ser extendido por outras páginas do sistema.
@@ -384,11 +384,11 @@ No código acima, definimos um template que pode ser extendido por outras págin
 ### Crie um arquivo chamado home.html
 
 ```html
-{% extends template.html %}
+{{ extends template.html }}
 
-{% block content %}
+{{ block content }}
     <p>Olá Mundo</p>
-{% endblock %}
+{{ endblock }}
 ```
 
 No código acima, criamos uma view que extende do template. O texto Olá Mundo será impreso dentro do yield
