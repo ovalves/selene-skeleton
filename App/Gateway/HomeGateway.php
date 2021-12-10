@@ -11,7 +11,7 @@ use Selene\Gateway\GatewayAbstract;
 class HomeGateway extends GatewayAbstract
 {
     /**
-     * Using the gateway to create a query
+     * Using the gateway to create a query.
      */
     public function getBooks()
     {
@@ -24,20 +24,20 @@ class HomeGateway extends GatewayAbstract
     }
 
     /**
-     * Creating an insert clause
+     * Creating an insert clause.
      */
     public function insertBook()
     {
         return $this->insert([
                 'id' => 1,
-                'title' => 'Toy Story'
+                'title' => 'Toy Story',
             ])
             ->table('books')
             ->execute();
     }
 
     /**
-     * Creating a delete clause
+     * Creating a delete clause.
      */
     public function deleteBook(int $cod)
     {
@@ -48,12 +48,12 @@ class HomeGateway extends GatewayAbstract
     }
 
     /**
-     * Creating an update clause
+     * Creating an update clause.
      */
     public function updateTipo()
     {
         $this->update([
-                'title' => 'Toy Story'
+                'title' => 'Toy Story',
             ])
             ->table('books')
             ->where(['id = ?' => 1])

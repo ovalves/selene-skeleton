@@ -11,9 +11,9 @@ use Selene\Model\ModelAbstract;
 class Books extends ModelAbstract
 {
     /**
-     * Constante que indica o nome da tabela
+     * Constante que indica o nome da tabela.
      */
-    const TABLENAME = 'books';
+    public const TABLENAME = 'books';
 
     protected $id;
     protected $title;
