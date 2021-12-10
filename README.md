@@ -364,7 +364,7 @@ As views do framework ficam na pasta public/Views:
 
 ### Crie um arquivo chamado template.html
 
-```html
+```php
 {% include /partials/header.html %}
     <div class="wrapper">
         {% include /components/navbar.html %}
