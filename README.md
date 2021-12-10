@@ -1,328 +1,446 @@
-# Selene Microframework
+## Selene Framework
 
-Selene is a PHP micro-framework that helps you quickly write simple web applications.
+O Selene é uma micro-framework PHP.
 
-## Installation
+Selene foi desenvolvido, para tornar mais simples as tarefas comuns utilizadas na maioria dos projetos da web, selene possui:
 
-It's recommended that you use [Composer](https://getcomposer.org/) to install Selene.
+- Sistema de MVC
+- Sistema de roteamento
+- Sistema de injeção de dependência
+- Gerenciamento de sessão
+- Autenticação de usuário
+- Query Builder para banco de dados Mysql e MongoDB.
+- Sistema de template engine
+- Sistema de Middleware
+- Sistema de redirecionamento de usuário
+- Gerenciamento do sistema de arquivos
+- Gerenciamento de Logs
+
+## Instalação
+
+É recomendável que você use [Composer](https://getcomposer.org/) para instalar selene.
 
 ```bash
-$ composer require vindite/selene "dev-master@dev"
+$ composer require ovalves/selene "dev-master@dev"
 ```
 
-This will install Selene and all required dependencies. Selene requires PHP 7.2 or newer.
+Isso instalará Selene e todas as suas dependências. Selene requer PHP 8.0 ou superior.
 
-## Usage
+## Uso básico
 
-Create an index.php file with the following contents:
+Crie um arquivo index.php com o seguinte conteúdo:
 
 ```php
 <?php
 
 require 'vendor/autoload.php';
 
-$app = Selene\App\Factory::create();
+/*
+|--------------------------------------------------------------------------
+| Obtendo uma instância de Selene Framework
+|--------------------------------------------------------------------------
+|
+| '/var/www/html/app/' é o mapeamento da raiz da nossa aplicação
+*/
+$app = Selene\App\Factory::create('/var/www/html/app/');
 
-$app->route()->middleware([
-   new Selene\Middleware\Handler\Auth
-])->group(function () use ($app) {
+/*
+|--------------------------------------------------------------------------
+| Usando o roteador para registrar as rotas da sua aplicação
+|--------------------------------------------------------------------------
+| No caso abaixo, estamos criando um grupo nomeado 'auth'
+|
+| A criação de grupo de rotas serve para facilitar a utilização dos middlewares
+*/
+$app->route()->group('auth', function () use ($app) {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Neste caso, estamos adicionando o middleware de autentição
+    |--------------------------------------------------------------------------
+    | Esse middleware será executado em todas as rotas que pertencerem a esse grupo
+    */
+    $app->route()->middleware([new Selene\Middleware\Handler\Auth]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Esta rota responde como um callable
+    |--------------------------------------------------------------------------
+    */
     $app->route()->get('/callable', function () use ($app) {
-        $app->json('ola mundo again');
+        $app->json('Hello World!!!');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mapeamento de método HTTP da request com a solicita~ HTTP de solicitação
+    |--------------------------------------------------------------------------
+    */
     $app->route()->get('/', 'HomeController@index');
-    $app->route()->get('/shos/{id}', 'HomeController@show');
     $app->route()->get('/show/{id}', 'HomeController@show');
-    $app->route()->get('/store', 'HomeController@store');
-    $app->route()->get('/login', 'HomeController@login');
-    $app->route()->post('/login', 'HomeController@login');
-    $app->route()->get('/logout', 'HomeController@logout');
-    $app->route()->get('/logout', 'HomeController@logout');
+    $app->route()->update('/show/{id}', 'HomeController@show');
+    $app->route()->delete('/show/{id}', 'HomeController@show');
+    $app->route()->post('/show', 'HomeController@login');
 })->run();
 ```
 
-## Creating a controller
+## Criando uma controller
 
-Create a file inside the Controllers folder with the following contents:
+Crie um arquivo dentro da pasta Controllers com o seguinte conteúdo:
 
 ```php
 <?php
 
-use Selene\Container\ServiceContainer;
 use Selene\Controllers\BaseController;
 use Selene\Request\Request;
 use Selene\Response\Response;
+use Selene\Render\View;
 
-class BookController extends BaseController
+class HomeController extends BaseController
 {
-    /**
-     * Index Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
-     */
-    public function index(Request $request, Response $response)
+    public function index(Request $request, Response $response): View
     {
-        /**
-         * Select Query
-         */
+        return $this->view()->render(
+            'pages/home',
+            [
+                'pageTitle' => 'Home'
+            ]
+        );
+    }
+}
+```
+
+## Utilizando o Query Builder
+
+Podemos utilizar o query builder a partir dos gateways:
+
+```php
+<?php
+
+use Selene\Gateway\GatewayAbstract;
+
+class Gateway extends GatewayAbstract
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Criando uma query select
+    |--------------------------------------------------------------------------
+    */
+    public function select(): View
+    {
         $books = $this->select('*')
-                      ->table('books')
-                      ->where(['title = ?' => 'movies'])
+                      ->table('movies')
+                      ->where(['title = ?' => 'Toy Story'])
                       ->execute()
                       ->fetchAll();
+    }
 
-        /**
-         * Insert Query
-         */
+    /*
+    |--------------------------------------------------------------------------
+    | Criando uma query insert
+    |--------------------------------------------------------------------------
+    */
+    public function insert(): View
+    {
         $this->insert(['id' => 1, 'title' => 'Toy Story'])
              ->table('movies')
              ->execute();
+    }
 
-        /**
-         * Update Query
-         */
+    /*
+    |--------------------------------------------------------------------------
+    | Criando uma query insert
+    |--------------------------------------------------------------------------
+    */
+    public function update(): View
+    {
         $this->update(['title' => 'Toy Story'])
              ->table('movies')
              ->where(['id = ?' => 1])
              ->execute();
+    }
 
-        /**
-         * Delete Query
-         */
+    /*
+    |--------------------------------------------------------------------------
+    | Criando uma query insert
+    |--------------------------------------------------------------------------
+    */
+    public function update(): View
+    {
         $this->delete()
              ->table('movies')
-             ->where(['id = ?' => $cod])
+             ->where(['id = ?' => 1])
              ->execute();
-
-        /**
-         * @example Setting variables for the view
-         */
-        $this->view()->assign('books', $books);
-        $this->view()->assign('statement', 'Matrix');
-        $this->view()->assign('anotherStatement', 'Toy Story');
-        $this->view()->assign('toUpperCase', 'person');
-        $this->view()->assign('toLowerCase', 'PERSON');
-
-        /**
-        * @example render view
-        */
-        $this->view()->render('home/home.php');
     }
 }
 ```
-## Getting the request parameters
+
+## Trabalhando com os dados da Request
 
 ```php
 <?php
 
-    // ... omitted code
-
-    /**
-     * Index Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
-    */
+class HomeController extends BaseController
+{
     public function index(Request $request, Response $response)
     {
-        // Getting post params
+        /*
+        |--------------------------------------------------------------------------
+        | Pegando os dados enviados via POST
+        |--------------------------------------------------------------------------
+        */
         $request->getPostParams();
 
-        // Getting get params
+        /*
+        |--------------------------------------------------------------------------
+        | Pegando os dados enviados via GET
+        |--------------------------------------------------------------------------
+        */
         $request->getGetParams();
 
-        // Getting put params
+        /*
+        |--------------------------------------------------------------------------
+        | Pegando os dados enviados via PUT
+        |--------------------------------------------------------------------------
+        */
         $request->getPutParams();
 
-        // Getting delete params
+        /*
+        |--------------------------------------------------------------------------
+        | Pegando os dados enviados via DELETE
+        |--------------------------------------------------------------------------
+        */
         $request->getDeleteParams();
-    }
 
-    // ... omitted code
+        /*
+        |--------------------------------------------------------------------------
+        | Pegando os dados do corpo da requisição
+        |--------------------------------------------------------------------------
+        */
+        $request->getContentBody();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pegando todos os dados da requisição
+        |--------------------------------------------------------------------------
+        */
+        $request->all();
+    }
+}
 ```
 
-## Using Authentication on Controller
+## Trabalhando com autenticação na Controller
 
-If you are using authentication middleware you can test if the user is logged in.
+Se você estiver usando o middleware de autenticação, você pode testar se o usuário está logado.
 
 ```php
 <?php
-
-    // ... omitted code
-
-    /**
-     * Index Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
-    */
+class HomeController extends BaseController
+{
     public function index(Request $request, Response $response)
     {
         if ($response->isUnauthorized()) {
             $response->redirectToLoginPage();
         }
-
-        // ... omitted code
     }
-
-    // ... omitted code
+}
 ```
-Using Selene Authentication Container you can register, authenticate or lo users too
+
+Se você estiver usando o middleware de autenticação, você pode registrar, autenticar os usuários
 
 ```php
 <?php
 
-    // ... omitted code
+use Selene\Container\ServiceContainer;
 
-    /**
-     * Index Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
-    */
+class HomeController extends BaseController
+{
     public function register(Request $request, Response $response)
     {
-        // Getting the authentication object container
-        $auth = $this->container->get(ServiceContainer::AUTH);
-
-        // Getting request params
+        /*
+        |--------------------------------------------------------------------------
+        | Pegando o objete de autenticação via Service Container
+        |--------------------------------------------------------------------------
+        */
+        $auth = app()->container()->get(ServiceContainer::AUTH);
         $data = $request->getPostParams();
 
-        // Registering user
+        /*
+        |--------------------------------------------------------------------------
+        | Registrando um usuário
+        |--------------------------------------------------------------------------
+        */
         $auth->registerUser($data['email'], $data['password']);
     }
 
-    /**
-     * isAuthenticated Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
-    */
-    public function isAuthenticated(Request $request, Response $response)
+    public function isAuthenticated(Request $request, Response $response): View
     {
-        // Getting the authentication object container
-        $auth = $this->container->get(ServiceContainer::AUTH);
+        /*
+        |--------------------------------------------------------------------------
+        | Pegando o objete de autenticação via Service Container
+        |--------------------------------------------------------------------------
+        */
+        $auth = app()->container()->get(ServiceContainer::AUTH);
 
-        // Testing authentication
+        // Testando se o usuário está atenticado
         if ($auth->isAuthenticated()) {
-            $this->view()->render('home/home.php');
-        } else {
-            $this->view()->render('home/login.php');
+            return $this->view()->render('home/home');
         }
+
+        redirect()
+            ->message('failed', 'Erro ao fazer login. Usuário ou senha incorreta!')
+            ->back();
     }
 
-    /**
-     * logout Action
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return template|view
-     */
     public function logout(Request $request, Response $response)
     {
-        // Getting the authentication object container
-        $auth = $this->container->get(ServiceContainer::AUTH);
+        $auth = app()->container()->get(ServiceContainer::AUTH);
         $auth->logout();
-    }
 
-    // ... omitted code
+        redirect()
+            ->to('url')
+            ->message('success', 'Sua sessão foi finalizada!')
+            ->go();
+    }
+}
 ```
 
-## Changing app configuration parameters
+## Alterando os parâmetros de configuração do framework
+
+Altere o arquivo app.php dentro da pasta Config
 
 ```php
-    return [
-        // Changing the database configuration parameters
-        'database' => [
-            'mysql' => [
-                'db_host' => '127.0.0.1',
-                'db_name' => 'vindite',
-                'db_user' => 'root',
-                'db_pass' => 'root',
-                'db_type' => 'mysql'
-            ],
-            'default' => 'mysql'
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Configurações de conexação com a base de dados
+    |--------------------------------------------------------------------------
+    */
+    ConfigConstant::DATABASE => [
+        'mysql' => [
+            DatabaseConstant::DB_HOST => env('MYSQL_HOST'),
+            DatabaseConstant::DB_NAME => env('MYSQL_DATABASE'),
+            DatabaseConstant::DB_USER => env('MYSQL_ROOT_USER'),
+            DatabaseConstant::DB_PASS => env('MYSQL_ROOT_PASSWORD'),
         ],
-        // If you are using authentication middleware, you will need to set session parameters.
-        'auth' => [
-            // data
-        ],
-        // If you are using authentication middleware, you will need to set auth parameters.
-        'session' => [
-            // data
-        ]
-    ];
+        DatabaseConstant::DEFAULT_DB => 'mysql',
+    ],
+    /*
+    |--------------------------------------------------------------------------
+    | Configurações do sistema de autenticação do framework
+    |--------------------------------------------------------------------------
+    */
+    ConfigConstant::AUTH => [
+        ConfigConstant::AUTH_TABLE_NAME => 'users',
+        ConfigConstant::AUTH_LOGIN_URL => env('APP_URL') . '/client/signin',
+        ConfigConstant::AUTH_REDIRECT_SUCCESS_LOGIN => env('APP_URL'),
+        ConfigConstant::AUTH_REDIRECT_FAILED_LOGIN => env('APP_URL') . '/client/signin',
+    ],
+    /*
+    |--------------------------------------------------------------------------
+    | Configurações do sistema de sessão do framework
+    |--------------------------------------------------------------------------
+    */
+    ConfigConstant::SESSION => [
+        ConfigConstant::SESSION_TABLE_NAME => 'session',
+        ConfigConstant::SESSION_EXPIRATION_TIME => 3600,
+        ConfigConstant::SESSION_REFRESH_TIME => 3600,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Habilita ou desabilita os módulos do framework
+    |--------------------------------------------------------------------------
+    */
+    ConfigConstant::ENABLE_SESSION_CONTAINER => true,
+    ConfigConstant::ENABLE_AUTH_CONTAINER => true,
+    ConfigConstant::ENABLE_CACHE_VIEWS => false,
+];
 ```
 
-## Creating a template with Selene template engine
+## Trabalhando com a template engine
 
-Create a file called home.php inside the Views/home folder with the following contents:
+As views do framework ficam na pasta public/Views:
 
+### Crie um arquivo chamado template.html
+
+```html
+{% include /partials/header.html %}
+    <div class="wrapper">
+        {% include /components/navbar.html %}
+        <div class="content-wrapper">
+            <section class="content">
+                <div class="container-fluid">
+                    {% yield content %}
+                </div>
+            </section>
+        </div>
+    </div>
+{% include /partials/footer.html %}
+```
+
+No código acima, definimos um template que pode ser extendido por outras páginas do sistema.
+
+### Crie um arquivo chamado home.html
+
+```html
+{% extends template.html %}
+
+{% block content %}
+    <p>Olá Mundo</p>
+{% endblock %}
+```
+
+No código acima, criamos uma view que extende do template. O texto Olá Mundo será impreso dentro do yield
+
+### Outros recursos da template engine
 ```php
 <?php
 
-<!-- include a partial template -->
-{{ include /partials/header.php }}
+/*
+|--------------------------------------------------------------------------
+| Utilizando código PHP dentro da template engine
+|--------------------------------------------------------------------------
+*/
+{% (foreach $books as $book): %}
+    <p>{{ $book['terror'] | lower }}</p>
+    <p>{{ $book['romance'] | upper }}</p>
+    <p>{{ $book['action'] | upper }}</p>
+{% endforeach %}
 
-<!-- Iterating in an array -->
-{{ foreach $books as $book }}
-    <p>{{ $book.terror | lower }}</p>
-    <p>{{ $book.romance | upper }}</p>
-    <p>{{ $book.action | upper }}</p>
-{{ endforeach }}
-
-<!-- Using template modification plugins -->
-<p>{{ $anotherStatement | lower }}</p>
-<p>{{ $toUpperCase | upper }}</p>
-<p>{{ $toLowerCase | lower }}</p>
-<p>{{ $statement | upper }}</p>
-
-<a href="/login">teste</a>
-<!-- use of if tag in template -->
-{{ if ($statement == 'compare') }}
-    <!-- ...code -->
-{{ elseif ($anotherStatement == 'compare') }}
-    <!-- ...code -->
-{{ else }}
-    <!-- ...code -->
-{{ endif }}
-
-<!-- include a partial template -->
-{{ include /partials/footer.php }}
+/*
+|--------------------------------------------------------------------------
+| Ecoando texto dentro da template engine
+|--------------------------------------------------------------------------
+| No exemplo acima além de ecoar o texto também estamos aplicando um modificador no texto
+|
+| O modificador citado acima, transforma o texto em maiusculo
+*/
+{{ 'olá mundo!!!' | upper }} // 'OLÁ MUNDO!!!'
 ```
 
-## Using Selene solvr console to generate class
+## Usando o console de linha de comando do Selene
 
-## Asking for console help
+## Pedindo ajuda
 ```php
 php solvr --help
 ```
 
-## Asking for console help on making controllers
+## Pedindo ajuda do console para criar controllers
 ```php
 php solvr generate:controller --help
 ```
 
-## Making a simple controller
+## Criando uma controller simples
 ```php
 php solvr generate:controller simpleController
 ```
 
-## Creating a resource controller (it will create actions for HTTP methods - to make CRUD easier)
+## Criando uma controller de recursos (irá criar actions para todos os verbos HTTP)
 ```php
 php solvr generate:controller resourceController --resource
 ```
 
-## Credits
+## Licença
 
-- [Vinicius Alves](https://github.com/vindite)
-
-## License
-
-The Selene Microframework is licensed under the MIT license. See [License File](LICENSE) for more information.
+O Selene framework é licenciado usa a licença MIT license. Veja [License File](LICENSE) para maiores informações.
