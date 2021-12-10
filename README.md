@@ -402,11 +402,11 @@ No código acima, criamos uma view que extende do template. O texto Olá Mundo s
 | Utilizando código PHP dentro da template engine
 |--------------------------------------------------------------------------
 */
-{% (foreach $books as $book): %}
+{{ (foreach $books as $book): }}
     <p>{{ $book['terror'] | lower }}</p>
     <p>{{ $book['romance'] | upper }}</p>
     <p>{{ $book['action'] | upper }}</p>
-{% endforeach %}
+{{ endforeach }}
 
 /*
 |--------------------------------------------------------------------------
