@@ -121,12 +121,7 @@ use Selene\Gateway\GatewayAbstract;
 
 class Gateway extends GatewayAbstract
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Criando uma query select
-    |--------------------------------------------------------------------------
-    */
-    public function select(): View
+    public function select()
     {
         $books = $this->select('*')
                       ->table('movies')
@@ -135,24 +130,14 @@ class Gateway extends GatewayAbstract
                       ->fetchAll();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Criando uma query insert
-    |--------------------------------------------------------------------------
-    */
-    public function insert(): View
+    public function insert()
     {
         $this->insert(['id' => 1, 'title' => 'Toy Story'])
              ->table('movies')
              ->execute();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Criando uma query insert
-    |--------------------------------------------------------------------------
-    */
-    public function update(): View
+    public function update()
     {
         $this->update(['title' => 'Toy Story'])
              ->table('movies')
@@ -160,12 +145,7 @@ class Gateway extends GatewayAbstract
              ->execute();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Criando uma query insert
-    |--------------------------------------------------------------------------
-    */
-    public function update(): View
+    public function delete()
     {
         $this->delete()
              ->table('movies')
@@ -246,7 +226,7 @@ class HomeController extends BaseController
 }
 ```
 
-Se você estiver usando o middleware de autenticação, você pode registrar, autenticar os usuários
+Se você estiver usando o middleware de autenticação, você pode registrar e autenticar os usuários
 
 ```php
 <?php
@@ -275,20 +255,14 @@ class HomeController extends BaseController
 
     public function isAuthenticated(Request $request, Response $response): View
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Pegando o objete de autenticação via Service Container
-        |--------------------------------------------------------------------------
-        */
         $auth = app()->container()->get(ServiceContainer::AUTH);
 
-        // Testando se o usuário está atenticado
         if ($auth->isAuthenticated()) {
-            return $this->view()->render('home/home');
+            return $this->view()->render('home');
         }
 
         redirect()
-            ->message('failed', 'Erro ao fazer login. Usuário ou senha incorreta!')
+            ->message('failed', 'Erro ao fazer login. Usuário ou senha incorretos!')
             ->back();
     }
 
@@ -362,7 +336,7 @@ return [
 
 As views do framework ficam na pasta public/Views:
 
-### Crie um arquivo chamado template.html
+### Crie um arquivo chamado template.html com o seguinte conteúdo
 
 ```html
 {{ include /partials/header.html }}
@@ -391,7 +365,7 @@ No código acima, definimos um template que pode ser extendido por outras págin
 {{ endblock }}
 ```
 
-No código acima, criamos uma view que extende do template. O texto Olá Mundo será impreso dentro do yield
+No código acima, criamos uma view que extende do `template.html`.
 
 ### Outros recursos da template engine
 ```php
@@ -414,7 +388,7 @@ No código acima, criamos uma view que extende do template. O texto Olá Mundo s
 |--------------------------------------------------------------------------
 | No exemplo acima além de ecoar o texto também estamos aplicando um modificador no texto
 |
-| O modificador citado acima, transforma o texto em maiusculo
+| O modificador aplicado transforma o texto em maiusculo
 */
 {{ 'olá mundo!!!' | upper }} // 'OLÁ MUNDO!!!'
 ```
